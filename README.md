@@ -1,7 +1,9 @@
 # Orcus.DataAccess
-RepositoryPattern - UnitOfWork - ServicePattern - SqlDataOperation
 
-# Unit Of Work Üzerinde Repository Pattern Kullanımı
+Projeyi indirmeniz halinde içindeki test projesi ile istediğiniz detaylı bilgiye ulaşabilirsiniz.
+
+
+# Unit Of Work İle Repository Pattern Kullanımı
 
 ```c#
 var context = new NORTHWNDEntities();
@@ -11,21 +13,10 @@ using (IUnitOfWork unitOfWork = new UnitOfWork(context))
     var customerRepository = unitOfWork.Repository<Customers>();
     customerRepository.Insert(new Customers
     {
-        CustomerID = "YAMI1",
+        CustomerID = "125",
         CompanyName = "Deneme - CompanyName"
     });
     unitOfWork.SaveChanges();
-    unitOfWork.RollbackTransaction();
-
-    unitOfWork.Dispose();
-    var isDisposed = (bool)GetInstanceField(typeof(UnitOfWork), unitOfWork, "_disposed");
-    Assert.IsTrue(isDisposed);
-
-    unitOfWork.Dispose();
-    context.Dispose();
-
-    context.Dispose();
-    unitOfWork.Dispose();
 }
 ```
 
@@ -35,7 +26,6 @@ using (IUnitOfWork unitOfWork = new UnitOfWork(context))
 {
   IRepository<Customers> customerRepository = unitOfWork.Repository<Customers>();
   var retVal = customerRepository.GetFirstOrDefault();
-  Assert.IsNotNull(retVal.Address);
 }
 ```
 
@@ -49,22 +39,11 @@ using (IUnitOfWork unitOfWork = new UnitOfWork(context))
     var customerService = new CustomerService(unitOfWork);
     customerService.Insert(new Customers
     {
-        CustomerID = "YAMI1",
+        CustomerID = "125",
         CompanyName = "Deneme - CompanyName"
     });
 
     unitOfWork.SaveChanges();
-    unitOfWork.RollbackTransaction();
-
-    unitOfWork.Dispose();
-    var isDisposed = (bool)GetInstanceField(typeof(UnitOfWork), unitOfWork, "_disposed");
-    Assert.IsTrue(isDisposed);
-
-    unitOfWork.Dispose();
-    context.Dispose();
-
-    context.Dispose();
-    unitOfWork.Dispose();
 }
 ```
 
@@ -74,6 +53,29 @@ using (IUnitOfWork unitOfWork = new UnitOfWork(context))
 {
     var customerService = new CustomerService(unitOfWork);
     var result = customerService.GetFirstOrDefault();
-    Assert.IsNotNull(result.ResultObject.CompanyName);
+}
+```
+
+Service Pattern İçeriği; 
+
+```c#
+public interface ICustomerService : IService<Customers>
+{
+    IEnumerable<Customers> CustomersByCompany(string companyName);
+}
+
+public class CustomerService : Service<Customers>, ICustomerService
+{
+    private readonly IRepository<Customers> _repository;
+
+    public CustomerService(IUnitOfWork unitOfWork) : base(unitOfWork)
+    {
+        _repository = unitOfWork.Repository<Customers>();
+    }
+
+    public IEnumerable<Customers> CustomersByCompany(string companyName)
+    {
+        return _repository.CustomersByCompany(companyName);
+    }
 }
 ```
